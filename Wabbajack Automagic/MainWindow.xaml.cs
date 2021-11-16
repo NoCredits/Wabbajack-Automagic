@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -22,11 +22,30 @@ namespace Wabbajack_Automagic
 
         private const int MOUSEEVENTF_LEFTDOWN = 0x02;
         private const int MOUSEEVENTF_LEFTUP = 0x04;
+        private const int MOUSEEVENTF_MIDDLEDOWN = 0x0020;
+        private const int MOUSEEVENTF_MIDDLEUP= 0x0040;
 
         private DispatcherTimer magicTimer;
 
         private Bitmap currentScreen, slowButton;
         private System.Drawing.Point? currentPoint;
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetCursorPos(ref Win32Point pt);
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct Win32Point
+        {
+            public Int32 X;
+            public Int32 Y;
+        };
+        public static System.Windows.Point GetMousePosition()
+        {
+            var w32Mouse = new Win32Point();
+            GetCursorPos(ref w32Mouse);
+            return new System.Windows.Point(w32Mouse.X, w32Mouse.Y);
+        }
 
         public MainWindow()
         {
@@ -68,20 +87,30 @@ namespace Wabbajack_Automagic
 
         private void magicTimer_Tick(object sender, EventArgs e)
         {
+                        
             outputToConsole("Checking for button");
-            SetCursorPos(0, 0);
+            
+            System.Windows.Point currentMousePos=GetMousePosition();
             currentScreen = Screenshot();
             currentPoint = Find(currentScreen, slowButton);
             if (currentPoint.HasValue)
             {
                 outputToConsole("Found button at: (" + currentPoint.Value.X + "," + currentPoint.Value.Y + ")");
                 clickMouse(currentPoint.Value.X + (slowButton.Width / 2), currentPoint.Value.Y + (slowButton.Height / 2));
+
+                //goto last position
+                SetCursorPos((int)currentMousePos.X,(int)currentMousePos.Y);    
+                //and create focus (not the best way, so turned it of for now)
+                //mouse_event(MOUSEEVENTF_MIDDLEDOWN, (int)currentMousePos.X,(int)currentMousePos.Y, 0, 0);
+                //mouse_event(MOUSEEVENTF_MIDDLEUP, (int)currentMousePos.X,(int)currentMousePos.Y, 0, 0);
+
                 wait(5000);
             }
             else
             {
                 outputToConsole("Couldn't find button");
             }
+            
         }
 
         private void clearConsole()
@@ -94,7 +123,7 @@ namespace Wabbajack_Automagic
             textOutput.Focus();
             textOutput.CaretIndex = textOutput.Text.Length;
             textOutput.ScrollToEnd();
-        }
+        }          
         private static void clickMouse(int Xposition, int Yposition)
         {
             SetCursorPos(Xposition, Yposition);
