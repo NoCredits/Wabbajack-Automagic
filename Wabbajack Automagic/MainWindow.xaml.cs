@@ -76,6 +76,7 @@ namespace Wabbajack_Automagic
             {
                 outputToConsole("Found button at: (" + currentPoint.Value.X + "," + currentPoint.Value.Y + ")");
                 clickMouse(currentPoint.Value.X + (slowButton.Width / 2), currentPoint.Value.Y + (slowButton.Height / 2));
+                SetCursorPos(currentPoint.Value.X+200, currentPoint.Value.Y+200);
                 wait(5000);
             }
             else
